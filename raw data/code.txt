@@ -1,0 +1,72 @@
+// Complaints, companies, responses.
+
+	// Uniqueness constraints.
+CREATE CONSTRAINT ON (h:hero) ASSERT h.name IS UNIQUE;
+CREATE CONSTRAINT ON (c:comic) ASSERT c.name IS UNIQUE;
+CREATE CONSTRAINT ON (hh:hero1) ASSERT hh.name IS UNIQUE;
+CREATE CONSTRAINT ON (hhh:hero2) ASSERT hhh.name IS UNIQUE;
+
+LOAD CSV WITH HEADERS FROM 'file:///edges.csv' AS row
+MERGE (h:hero {name: row.hero})
+MERGE (c:comic {name: row.comic})
+MERGE (h)-[r:INTERACTS]->(c)
+
+
+
+match(c:comic) return count(c)
+
+match(h:hero) return count(h)
+
+MATCH h=(:hero)-[:INTERACTS]-(:comic)
+RETURN h
+
+
+
+MATCH (h:hero)
+RETURN h.name AS hero, size((h)-[:INTERACTS]->()) AS degree ORDER BY degree DESC
+
+MATCH (c:comic)
+RETURN c.name AS comic, size((c)-[:INTERACTS]->()) AS degree ORDER BY degree DESC
+
+MATCH (h:hero)-[:INTERACTS]->()
+WITH h, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg, stdev(num) AS stdev
+
+MATCH (c:comic)-[:INTERACTS]->()
+WITH c, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg, stdev(num) AS stdev
+
+MATCH (h:hero{name:"CAPTAIN AMERICA"})-[:INTERACTS]-(c:comic)
+RETURN h,c
+
+MATCH (c:comic{name:"COC 1"})-[:INTERACTS]-(h:hero)
+RETURN h,c
+
+
+LOAD CSV WITH HEADERS FROM 'file:///hero-network.csv' AS row
+MERGE (hh:hero1 {name: row.hero1})
+MERGE (hhh:hero2 {name: row.hero2})
+MERGE (hh)-[r:relations]-(hhh)
+
+match hh=(:hero1)-[:relations]-(:hero2)
+return hh
+
+match(hh:hero1) return count(hh)
+
+match(hhh:hero2) return count(hhh)
+
+MATCH (hh:hero1)
+RETURN hh.name AS comic, size((hh)-[:relations]->()) AS degree ORDER BY degree DESC
+
+MATCH (hh:hero1)-[:relations]->()
+WITH hh, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg, stdev(num) AS stdev
+
+
+MATCH (hh1:comic{name:"CAPTAIN AMERICA"})-[:relations]-(hhh:hero2)
+RETURN hh,hhh
+
+MATCH (hh:hero1 {name:"CAPTAIN AMERICA"}),(hhh:hero2 {name:"ANCIENT ONE"})
+MATCH p=shortestPath((hh)-[relations*]-(hhh))
+return p
+
